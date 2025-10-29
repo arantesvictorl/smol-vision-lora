@@ -26,13 +26,28 @@ class VisionLoRAModel(nn.Module):
         
     def _init_llm(self):
         """Initialize base language model."""
-        self.llm = AutoModelForCausalLM.from_pretrained(
-            self.config.model.model_name,
-            torch_dtype=getattr(torch, self.config.model.torch_dtype),
-            attn_implementation="flash_attention_2" if self.config.model.use_flash_attention else "eager",
-            device_map=self.config.model.device_map,
-            trust_remote_code=self.config.model.trust_remote_code,
-        )
+        attn_implementation = "flash_attention_2" if self.config.model.use_flash_attention else "eager"
+        
+        try:
+            self.llm = AutoModelForCausalLM.from_pretrained(
+                self.config.model.model_name,
+                torch_dtype=getattr(torch, self.config.model.torch_dtype),
+                attn_implementation=attn_implementation,
+                device_map=self.config.model.device_map,
+                trust_remote_code=self.config.model.trust_remote_code,
+            )
+        except ImportError as e:
+            if "flash_attn" in str(e):
+                print("Warning: Flash Attention not available, falling back to eager attention")
+                self.llm = AutoModelForCausalLM.from_pretrained(
+                    self.config.model.model_name,
+                    torch_dtype=getattr(torch, self.config.model.torch_dtype),
+                    attn_implementation="eager",
+                    device_map=self.config.model.device_map,
+                    trust_remote_code=self.config.model.trust_remote_code,
+                )
+            else:
+                raise
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.model.model_name)
         if self.tokenizer.pad_token is None:

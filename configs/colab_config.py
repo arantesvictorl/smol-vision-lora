@@ -6,13 +6,13 @@ def get_colab_test_config() -> Config:
     """
     Configuration optimized for Colab A100 testing.
     
-    Reduced scale for quick validation before full H100 training.
+    Disables flash attention for compatibility.
     """
     return Config(
         model=ModelConfig(
             model_name="HuggingFaceTB/SmolLM2-135M",
             torch_dtype="bfloat16",
-            use_flash_attention=True,
+            use_flash_attention=False,
             device_map="cuda",
         ),
         vision=VisionConfig(
@@ -61,14 +61,12 @@ def get_colab_test_config() -> Config:
 def get_colab_full_config() -> Config:
     """
     Configuration for extended testing on Colab A100.
-    
-    Scaled to use full Colab session (12h max).
     """
     return Config(
         model=ModelConfig(
             model_name="HuggingFaceTB/SmolLM2-135M",
             torch_dtype="bfloat16",
-            use_flash_attention=True,
+            use_flash_attention=False,
         ),
         vision=VisionConfig(
             image_size=224,
